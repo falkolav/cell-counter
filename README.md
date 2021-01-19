@@ -1,5 +1,5 @@
 # CNN-based regressor and ML pipeline for Automatic Cell Counting
-This is the implementation of two automated cell counting pipelines ("CNN based regressor and ML pipeline) as described in the following paper:
+This is the implementation of two automated cell counting pipelines ("CNN based regressor and ML pipeline") as described in the following paper:
 
 - Falko Lavitt, Demi J. Rijlaarsdam, Dennet van der Linden, Ewelina Weglarz-Tomczak, and Jakub M. Tomczak, _Automatic cell counting using a Convolutional Neural Network-based regressor with an application to microscope images of human cancer cell lines_, preprint, 2021
 ## Requirements
