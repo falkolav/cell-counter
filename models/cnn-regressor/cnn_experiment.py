@@ -1,10 +1,6 @@
 from fastai.vision.all import *
-from PIL import Image
 import os
-import pandas as pd
-import numpy as np
 import matplotlib.pyplot as plt
-from skimage import filters
 import argparse
 import datetime
 
@@ -20,7 +16,7 @@ parser.add_argument('--batch_size', type=int, default=32, metavar='BStrain',
 parser.add_argument('--epochs', type=int, default=400, metavar='Epochs',
                     help='number of epochs to train (default: 400)')
 parser.add_argument('--image_size', type=int, default=128, metavar='ImgSize',
-                    help='size of images (default: 128)')
+                    help='size to resize images to (default: 128)')
 parser.add_argument('--augmentations', default=True, action='store_true',
                     help='apply augmentations to data (default: True)')
 
@@ -34,10 +30,15 @@ parser.add_argument('--training', default=False, action='store_true',
 parser.add_argument('--inference', default=True, action='store_true',
                     help='run model in inference mode (default: True)')
 
+#folders
+parser.add_argument('--data_folder', type=str, default='/Users/falkolavitt/Python/CNN-regressor/data/', metavar='DF',
+                    help='path to folder where the data is located (default: /working_directory/data/)')
+parser.add_argument('--models_folder', type=str, default='/Users/falkolavitt/Python/CNN-regressor/models/cnn-regressor/models/', metavar='MF',
+                    help='path to folder where the models are located and results are saved (default: models/cnn-regressor/models/)')
 
 #cuda
-parser.add_argument('--no-cuda', action='store_true', default=False,
-                    help='enables CUDA training (default: False')
+parser.add_argument('--no-cuda', action='store_true', default=True,
+                    help='If false, enables CUDA training (default: True')
 
 #seed
 parser.add_argument('--seed', type=int, default=42, metavar='S',
@@ -61,7 +62,7 @@ def run(args, kwargs):
     model_name = 'model' + '_' + args.model_signature
 
     #### Set directories for saving
-    model_dir = os.getcwd() + '/models/' + 'results' + '_' + 'bs-' + str(args.batch_size) + '_' + 'epochs-' + str(args.epochs) + '_' + 'imgsize-' + str(args.image_size) + '_' + 'augmentations-' + str(args.augmentations) + '_pretrained-' + str(args.pretrained) + '/'
+    model_dir = args.models_folder + 'results' + '_' + 'bs-' + str(args.batch_size) + '_' + 'epochs-' + str(args.epochs) + '_' + 'imgsize-' + str(args.image_size) + '_' + 'augmentations-' + str(args.augmentations) + '_pretrained-' + str(args.pretrained) + '/'
 
     if args.training:
         if not os.path.exists(model_dir):
@@ -71,7 +72,7 @@ def run(args, kwargs):
     print('Loading Data')
 
     # obtain images from folder location
-    folder = '/Users/falkolavitt/Python/CNN-regressor/data/train/'
+    folder = args.data_folder + 'train/'
     path = Path(folder)
     fnames = get_image_files(path)
 
@@ -110,7 +111,7 @@ def run(args, kwargs):
 
     # load pretrained model from paper
     if args.load_model_from_paper:
-        learn.load('/Users/falkolavitt/Python/CNN-regressor/models/cnn-regressor/model')
+        learn.load(f'{os.getcwd()}/model')
 
     # train model
     if args.training:
@@ -119,23 +120,29 @@ def run(args, kwargs):
 
     # load test data into dataloader
     print('Loading test data')
-    imgs = get_image_files('/Users/falkolavitt/Python/CNN-regressor/data/test/')
-    dl = learn.dls.test_dl(imgs, with_labels=True, num_workers=kwargs['num_workers'])
+    imgs = get_image_files(f'{args.data_folder}test/')
+
+    if args.cuda:
+        dl = learn.dls.test_dl(imgs, with_labels=True)
+        dl.cuda()
+    else:
+        dl = learn.dls.test_dl(imgs, with_labels=True, num_workers=kwargs['num_workers'])
 
     # print performance on test set
     print('Performance: \nSum of error and Mean Absolute Error:')
     res = learn.validate(dl=dl)
     print(res)
 
-    # save performance
-    f = open(f'{model_dir}{model_name}.txt', 'w+')
-    f.write(str(args) + '\n' + str(res))
-    f.close()
+    if args.training:
+        # save performance
+        f = open(f'{model_dir}{model_name}.txt', 'w+')
+        f.write(str(args) + '\n' + str(res))
+        f.close()
 
-    # create boxplot of errors
-    plt.boxplot(abs(res[0].view((args.batch_size)) - res[1]), labels=['CNN'])
-    plt.savefig(f'{model_dir}{model_name}.png')
-    plt.close()
+        # create boxplot of errors
+        plt.boxplot(abs(res[0].view((args.batch_size)) - res[1]), labels=['CNN'])
+        plt.savefig(f'{model_dir}{model_name}.png')
+        plt.close()
 
 if __name__ == "__main__":
     run(args, kwargs)

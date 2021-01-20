@@ -25,6 +25,11 @@ parser.add_argument('--frangi', default=True, action='store_true',
 parser.add_argument('--seed', type=int, default=42, metavar='S',
                     help='random seed (default: 42)')
 
+
+#folders
+parser.add_argument('--data_folder', type=str, default='/Users/falkolavitt/Python/CNN-regressor/data/', metavar='DF',
+                    help='path to folder where the data is located (default: /working_directory/data/')
+
 args = parser.parse_args()
 
 def run(args):
@@ -35,7 +40,7 @@ def run(args):
     print('Loading data...')
 
     #loading data
-    folder = '/Users/falkolavitt/Python/CNN-regressor/data/'
+    folder = args.data_folder
     train_x, train_y = load_images(folder+'train/')
     test_x, test_y = load_images(folder+'test/')
 
